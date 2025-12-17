@@ -1,0 +1,212 @@
+"""
+Ingestion pipeline - the main entry point for processing new memories.
+
+Orchestrates: classification → extraction → embedding → storage
+"""
+from datetime import datetime
+from typing import Optional
+from dataclasses import dataclass
+
+from ..models import Episode
+from ..storage import Database, VectorStore
+from ..embeddings import EmbeddingProvider
+from ..llm import LLMProvider
+from .classifier import MemoryWorthinessClassifier, ClassificationResult
+from .extractor import EpisodeExtractor, ExtractionResult
+
+
+@dataclass
+class IngestionResult:
+    """Result of ingesting a piece of text."""
+    success: bool
+    episode: Optional[Episode] = None
+    classification: Optional[ClassificationResult] = None
+    extraction: Optional[ExtractionResult] = None
+    reason: str = ""
+    
+    @classmethod
+    def skipped(cls, reason: str, classification: ClassificationResult = None) -> "IngestionResult":
+        return cls(
+            success=False,
+            classification=classification,
+            reason=reason
+        )
+    
+    @classmethod
+    def stored(cls, episode: Episode, classification: ClassificationResult, extraction: ExtractionResult) -> "IngestionResult":
+        return cls(
+            success=True,
+            episode=episode,
+            classification=classification,
+            extraction=extraction,
+            reason="Stored successfully"
+        )
+
+
+class IngestionPipeline:
+    """
+    Main ingestion pipeline for processing raw input into stored memories.
+    
+    Pipeline stages:
+    1. Classification: Is this worth remembering?
+    2. Extraction: Extract structured memory
+    3. Embedding: Generate vector embedding
+    4. Storage: Persist to database and vector store
+    
+    Design notes:
+    - Each stage can short-circuit (e.g., not memory-worthy → skip rest)
+    - Confidence scores propagate through the pipeline
+    - Sessions allow grouping related inputs
+    """
+    
+    def __init__(
+        self,
+        database: Database,
+        vector_store: VectorStore,
+        embedding_provider: EmbeddingProvider,
+        llm: LLMProvider,
+        worthiness_threshold: float = 0.6,
+    ):
+        """
+        Initialize ingestion pipeline.
+        
+        Args:
+            database: Database for structured storage
+            vector_store: Vector store for embeddings
+            embedding_provider: Embedding model
+            llm: LLM for classification and extraction
+            worthiness_threshold: Minimum worthiness score to store
+        """
+        self.database = database
+        self.vector_store = vector_store
+        self.embedding_provider = embedding_provider
+        self.classifier = MemoryWorthinessClassifier(llm, threshold=worthiness_threshold)
+        self.extractor = EpisodeExtractor(llm)
+        self.worthiness_threshold = worthiness_threshold
+    
+    def ingest(
+        self,
+        text: str,
+        source: str = "chat",
+        session_id: Optional[str] = None,
+        timestamp: Optional[datetime] = None,
+        context: Optional[str] = None,
+        force: bool = False,
+    ) -> IngestionResult:
+        """
+        Ingest a piece of text into the memory system.
+        
+        Args:
+            text: Raw input text
+            source: Source of input (chat, note, import)
+            session_id: Session identifier for grouping
+            timestamp: When this input occurred (defaults to now)
+            context: Additional context for classification
+            force: Skip worthiness check and store anyway
+            
+        Returns:
+            IngestionResult with outcome and details
+        """
+        timestamp = timestamp or datetime.utcnow()
+        
+        # Stage 1: Classification (unless forced)
+        if not force:
+            classification = self.classifier.classify(
+                text,
+                context=context,
+                use_llm=True
+            )
+            
+            if not classification.is_memory_worthy:
+                return IngestionResult.skipped(
+                    f"Not memory-worthy: {classification.reason}",
+                    classification
+                )
+            
+            if classification.confidence < self.worthiness_threshold:
+                return IngestionResult.skipped(
+                    f"Below confidence threshold ({classification.confidence:.2f} < {self.worthiness_threshold})",
+                    classification
+                )
+        else:
+            classification = ClassificationResult(
+                is_memory_worthy=True,
+                confidence=1.0,
+                reason="Forced ingestion",
+                memory_type="episodic"
+            )
+        
+        # Stage 2: Extraction
+        extraction = self.extractor.extract(
+            text,
+            memory_type_hint=classification.memory_type,
+            timestamp=timestamp,
+            source=source,
+            session_id=session_id,
+        )
+        
+        episode = extraction.episode
+        
+        # Update confidence from classification and extraction
+        episode.confidence = min(
+            classification.confidence,
+            extraction.extraction_confidence
+        )
+        
+        # Stage 3: Embedding
+        embedding_text = episode.to_embedding_text()
+        embedding = self.embedding_provider.embed_text(embedding_text)
+        
+        # Stage 4: Storage
+        # First save to database to get ID
+        self.database.save_episode(episode)
+        
+        # Then add to vector store
+        embedding_id = self.vector_store.add(
+            "episodes",
+            episode.id,
+            embedding
+        )
+        
+        # Update episode with embedding ID
+        episode.embedding_id = embedding_id
+        self.database.update_embedding_id("episodes", episode.id, embedding_id)
+        
+        # Persist vector store
+        self.vector_store.save()
+        
+        return IngestionResult.stored(episode, classification, extraction)
+    
+    def ingest_batch(
+        self,
+        texts: list[str],
+        source: str = "chat",
+        session_id: Optional[str] = None,
+        timestamp: Optional[datetime] = None,
+    ) -> list[IngestionResult]:
+        """
+        Ingest multiple texts.
+        
+        Note: This processes sequentially for now. 
+        Could be optimized with batched embedding.
+        """
+        results = []
+        for text in texts:
+            result = self.ingest(
+                text,
+                source=source,
+                session_id=session_id,
+                timestamp=timestamp,
+            )
+            results.append(result)
+        return results
+    
+    def get_statistics(self) -> dict:
+        """Get pipeline statistics."""
+        db_stats = self.database.get_statistics()
+        vec_stats = self.vector_store.get_statistics()
+        return {
+            "database": db_stats,
+            "vector_store": vec_stats,
+        }
+

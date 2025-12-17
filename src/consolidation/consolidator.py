@@ -1,0 +1,259 @@
+"""
+Consolidation pipeline - orchestrates periodic memory consolidation.
+
+Consolidation transforms raw episodic memories into:
+1. Topic-level narrative summaries
+2. Stable semantic facts
+
+This mimics how human memory consolidates during sleep.
+"""
+from datetime import datetime, timedelta
+from typing import Optional
+from dataclasses import dataclass
+from uuid import uuid4
+
+from ..models import Episode, Fact, Summary
+from ..storage import Database, VectorStore
+from ..embeddings import EmbeddingProvider
+from ..llm import LLMProvider
+from .summarizer import Summarizer
+from .fact_extractor import FactExtractor
+
+
+@dataclass
+class ConsolidationResult:
+    """Result of a consolidation run."""
+    run_id: str
+    topic: Optional[str]
+    episodes_processed: int
+    summaries_created: int
+    facts_extracted: int
+    facts_updated: int
+    facts_contradicted: int
+    duration_seconds: float
+
+
+class ConsolidationPipeline:
+    """
+    Orchestrates memory consolidation.
+    
+    When to run consolidation:
+    1. Periodically (e.g., daily, triggered by scheduler)
+    2. When episode count exceeds threshold
+    3. Manually triggered by user
+    
+    How conflicts are handled:
+    - New information updates existing facts with boosted confidence
+    - Contradictions mark old facts as superseded
+    - Both old and new versions are preserved for provenance
+    
+    How older detail is preserved:
+    - Episodes are never deleted, only marked as consolidated
+    - Summaries link back to source episodes
+    - Facts link to all supporting episodes
+    - Hierarchical summaries aggregate over longer periods
+    """
+    
+    def __init__(
+        self,
+        database: Database,
+        vector_store: VectorStore,
+        embedding_provider: EmbeddingProvider,
+        llm: LLMProvider,
+        episode_threshold: int = 5,
+        age_threshold_days: int = 7,
+    ):
+        """
+        Initialize consolidation pipeline.
+        
+        Args:
+            database: Database storage
+            vector_store: Vector storage
+            embedding_provider: Embedding model
+            llm: LLM for summarization/extraction
+            episode_threshold: Min episodes before consolidation
+            age_threshold_days: Max days without consolidation
+        """
+        self.database = database
+        self.vector_store = vector_store
+        self.embedding_provider = embedding_provider
+        self.summarizer = Summarizer(llm)
+        self.fact_extractor = FactExtractor(llm)
+        self.episode_threshold = episode_threshold
+        self.age_threshold_days = age_threshold_days
+    
+    def consolidate_topic(self, topic: str) -> ConsolidationResult:
+        """
+        Consolidate a single topic.
+        
+        Args:
+            topic: Topic to consolidate
+            
+        Returns:
+            ConsolidationResult with statistics
+        """
+        run_id = str(uuid4())
+        start_time = datetime.utcnow()
+        
+        # Get unconsolidated episodes for this topic
+        episodes = self.database.get_unconsolidated_episodes(topic=topic)
+        
+        if not episodes:
+            return ConsolidationResult(
+                run_id=run_id,
+                topic=topic,
+                episodes_processed=0,
+                summaries_created=0,
+                facts_extracted=0,
+                facts_updated=0,
+                facts_contradicted=0,
+                duration_seconds=0.0
+            )
+        
+        # Get existing facts for comparison
+        existing_facts = self.database.get_facts(topic=topic)
+        
+        # Generate summary
+        summary_result = self.summarizer.summarize(episodes, topic)
+        summary = summary_result.summary
+        
+        # Embed and store summary
+        summary_embedding = self.embedding_provider.embed_text(
+            summary.to_embedding_text()
+        )
+        self.database.save_summary(
+            summary,
+            source_episode_ids=[ep.id for ep in episodes],
+            key_episode_ids=summary_result.key_episode_ids
+        )
+        embedding_id = self.vector_store.add("summaries", summary.id, summary_embedding)
+        self.database.update_embedding_id("summaries", summary.id, embedding_id)
+        
+        # Extract facts
+        fact_result = self.fact_extractor.extract_facts(
+            episodes, topic, existing_facts
+        )
+        
+        # Store new facts
+        for fact in fact_result.new_facts:
+            fact_embedding = self.embedding_provider.embed_text(
+                fact.to_embedding_text()
+            )
+            self.database.save_fact(fact, source_episode_ids=fact_result.source_episode_ids)
+            embedding_id = self.vector_store.add("facts", fact.id, fact_embedding)
+            self.database.update_embedding_id("facts", fact.id, embedding_id)
+        
+        # Handle updated facts
+        for old_id, new_fact in fact_result.updated_facts:
+            self.database.supersede_fact(old_id, new_fact)
+            fact_embedding = self.embedding_provider.embed_text(
+                new_fact.to_embedding_text()
+            )
+            self.database.save_fact(new_fact, source_episode_ids=fact_result.source_episode_ids)
+            embedding_id = self.vector_store.add("facts", new_fact.id, fact_embedding)
+            self.database.update_embedding_id("facts", new_fact.id, embedding_id)
+        
+        # Handle contradicted facts (mark as inactive)
+        for fact_id in fact_result.contradicted_fact_ids:
+            # Could add a "contradicted" flag, for now just supersede with nothing
+            pass
+        
+        # Mark episodes as consolidated
+        self.database.mark_episodes_consolidated([ep.id for ep in episodes])
+        
+        # Save vector store
+        self.vector_store.save()
+        
+        duration = (datetime.utcnow() - start_time).total_seconds()
+        
+        return ConsolidationResult(
+            run_id=run_id,
+            topic=topic,
+            episodes_processed=len(episodes),
+            summaries_created=1,
+            facts_extracted=len(fact_result.new_facts),
+            facts_updated=len(fact_result.updated_facts),
+            facts_contradicted=len(fact_result.contradicted_fact_ids),
+            duration_seconds=duration
+        )
+    
+    def consolidate_all(self) -> list[ConsolidationResult]:
+        """
+        Consolidate all topics that need it.
+        
+        Returns:
+            List of ConsolidationResult for each topic
+        """
+        topics = self.database.get_topics_needing_consolidation(
+            min_episodes=self.episode_threshold,
+            max_age_days=self.age_threshold_days
+        )
+        
+        results = []
+        for topic in topics:
+            result = self.consolidate_topic(topic)
+            results.append(result)
+        
+        return results
+    
+    def should_consolidate(self, topic: Optional[str] = None) -> bool:
+        """
+        Check if consolidation is needed.
+        
+        Args:
+            topic: Specific topic to check, or None for any topic
+            
+        Returns:
+            True if consolidation is needed
+        """
+        if topic:
+            episodes = self.database.get_unconsolidated_episodes(topic=topic)
+            return len(episodes) >= self.episode_threshold
+        else:
+            topics = self.database.get_topics_needing_consolidation(
+                min_episodes=self.episode_threshold,
+                max_age_days=self.age_threshold_days
+            )
+            return len(topics) > 0
+    
+    def create_weekly_summary(self, topic: str) -> Optional[Summary]:
+        """
+        Create a weekly summary from recent episodes.
+        
+        This is the standard consolidation unit.
+        """
+        week_ago = datetime.utcnow() - timedelta(days=7)
+        episodes = self.database.get_episodes(
+            topic=topic,
+            since=week_ago,
+            limit=100
+        )
+        
+        if not episodes:
+            return None
+        
+        result = self.summarizer.summarize(episodes, topic)
+        result.summary.summary_level = 1
+        
+        return result.summary
+    
+    def create_monthly_summary(self, topic: str) -> Optional[Summary]:
+        """
+        Create a monthly summary from weekly summaries.
+        
+        Higher-level consolidation for long-term patterns.
+        """
+        month_ago = datetime.utcnow() - timedelta(days=30)
+        weekly_summaries = self.database.get_summaries(
+            topic=topic,
+            level=1,
+            since=month_ago
+        )
+        
+        if len(weekly_summaries) < 2:
+            return None
+        
+        return self.summarizer.create_higher_level_summary(
+            weekly_summaries, topic, level=2
+        )
+

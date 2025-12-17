@@ -1,0 +1,20 @@
+# Core dependencies
+faiss-cpu>=1.7.4
+numpy>=1.24.0
+pydantic>=2.0.0
+python-dotenv>=1.0.0
+
+# Embedding providers
+openai>=1.0.0
+sentence-transformers>=2.2.0  # local fallback
+
+# LLM providers
+httpx>=0.25.0  # for async HTTP (ollama, etc.)
+
+# Utilities
+click>=8.1.0  # CLI framework
+rich>=13.0.0  # pretty terminal output
+python-dateutil>=2.8.0
+
+# Development
+pytest>=7.0.0

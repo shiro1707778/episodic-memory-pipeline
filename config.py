@@ -1,0 +1,125 @@
+"""
+Configuration management for the episodic memory pipeline.
+"""
+import os
+from pathlib import Path
+from dataclasses import dataclass, field
+from typing import Optional
+from dotenv import load_dotenv
+
+load_dotenv()
+
+
+@dataclass
+class Config:
+    """Central configuration for the memory pipeline."""
+    
+    # Paths
+    base_path: Path = field(default_factory=lambda: Path(__file__).parent)
+    database_path: Path = field(default=None)
+    vector_index_path: Path = field(default=None)
+    
+    # Embedding configuration (default: local with BGE-M3)
+    embedding_provider: str = "local"  # "local", "openai", "ollama", or "mock"
+    embedding_model: str = "BAAI/bge-m3"  # Default local model
+    embedding_dimension: int = 1024  # BGE-M3 dimension
+    embedding_device: str = "cpu"  # "cpu", "cuda", "mps", or auto-detect
+    
+    # Ollama embeddings (alternative to local SentenceTransformers)
+    ollama_embed_model: str = "nomic-embed-text"  # For EMBEDDING_PROVIDER=ollama
+    
+    # LLM configuration
+    llm_provider: str = "openai"  # "openai" or "ollama"
+    llm_model: str = "gpt-4o-mini"
+    ollama_base_url: str = "http://localhost:11434"
+    ollama_model: str = "qwen2.5:7b-instruct"  # Default local model
+    llm_temperature: float = 0.2  # Low for determinism
+    
+    # API keys (from environment)
+    openai_api_key: Optional[str] = field(default=None)
+    
+    # Memory pipeline settings
+    memory_worthiness_threshold: float = 0.6  # minimum score to store
+    consolidation_episode_threshold: int = 5  # episodes before consolidation
+    consolidation_age_days: int = 7  # consolidate weekly
+    max_episodes_per_summary: int = 20
+    
+    # Retrieval settings
+    semantic_top_k: int = 10
+    narrative_max_episodes: int = 50
+    similarity_threshold: float = 0.7
+    
+    def __post_init__(self):
+        # Set default paths relative to base
+        if self.database_path is None:
+            self.database_path = self.base_path / "data" / "memory.db"
+        if self.vector_index_path is None:
+            self.vector_index_path = self.base_path / "data" / "vectors.faiss"
+        
+        # Load from environment
+        self.openai_api_key = os.getenv("OPENAI_API_KEY")
+        self.embedding_provider = os.getenv("EMBEDDING_PROVIDER", self.embedding_provider)
+        self.llm_provider = os.getenv("LLM_PROVIDER", self.llm_provider)
+        
+        # Embedding-specific configuration
+        if embed_model := os.getenv("EMBEDDING_MODEL"):
+            self.embedding_model = embed_model
+        if embed_device := os.getenv("EMBEDDING_DEVICE"):
+            self.embedding_device = embed_device
+        if embed_dim := os.getenv("EMBEDDING_DIMENSION"):
+            self.embedding_dimension = int(embed_dim)
+        if ollama_embed := os.getenv("OLLAMA_EMBED_MODEL"):
+            self.ollama_embed_model = ollama_embed
+        
+        # Ollama-specific configuration
+        if ollama_model := os.getenv("OLLAMA_MODEL"):
+            self.ollama_model = ollama_model
+        if ollama_url := os.getenv("OLLAMA_BASE_URL"):
+            self.ollama_base_url = ollama_url
+        if llm_temp := os.getenv("LLM_TEMPERATURE"):
+            self.llm_temperature = float(llm_temp)
+        
+        if db_path := os.getenv("DATABASE_PATH"):
+            self.database_path = Path(db_path)
+        if vec_path := os.getenv("VECTOR_INDEX_PATH"):
+            self.vector_index_path = Path(vec_path)
+        
+        # Update embedding dimension based on provider/model
+        self._configure_embedding_dimension()
+        
+        # Ensure data directory exists
+        self.database_path.parent.mkdir(parents=True, exist_ok=True)
+    
+    def _configure_embedding_dimension(self):
+        """Set embedding dimension based on provider and model."""
+        # Only update if not explicitly set via environment
+        if os.getenv("EMBEDDING_DIMENSION"):
+            return
+        
+        # Known model dimensions
+        model_dimensions = {
+            # SentenceTransformers models
+            "BAAI/bge-m3": 1024,
+            "all-MiniLM-L6-v2": 384,
+            "all-mpnet-base-v2": 768,
+            # OpenAI models
+            "text-embedding-3-small": 1536,
+            "text-embedding-3-large": 3072,
+            # Ollama models
+            "nomic-embed-text": 768,
+            "mxbai-embed-large": 1024,
+        }
+        
+        if self.embedding_provider == "local":
+            self.embedding_dimension = model_dimensions.get(self.embedding_model, 1024)
+        elif self.embedding_provider == "openai":
+            self.embedding_dimension = model_dimensions.get(self.embedding_model, 1536)
+        elif self.embedding_provider == "ollama":
+            self.embedding_dimension = model_dimensions.get(self.ollama_embed_model, 768)
+        elif self.embedding_provider == "mock":
+            self.embedding_dimension = 1024  # Match BGE-M3 for consistency
+
+
+# Global config instance
+config = Config()
+
