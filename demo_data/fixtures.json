@@ -1,0 +1,57 @@
+{
+  "version": "1.0",
+  "description": "Synthetic demo episodes for the Episodic Memory Pipeline. All content is fictional.",
+  "episodes": [
+    {
+      "text": "I started learning Korean today. My goal is to be conversational by March for my Seoul trip.",
+      "source": "demo",
+      "expected_topics": ["learning", "korean", "travel"]
+    },
+    {
+      "text": "I've been practicing Korean for 2 hours. Learned basic greetings: 안녕하세요, 감사합니다.",
+      "source": "demo",
+      "expected_topics": ["learning", "korean"]
+    },
+    {
+      "text": "My friend recommended the Talk To Me In Korean podcast. Going to try it tomorrow.",
+      "source": "demo",
+      "expected_topics": ["learning", "korean", "recommendation"]
+    },
+    {
+      "text": "Had my first conversation in Korean today! Just basic stuff but it felt great.",
+      "source": "demo",
+      "expected_topics": ["learning", "korean", "milestone"]
+    },
+    {
+      "text": "I prefer visual learning over audio. Going to focus more on writing practice.",
+      "source": "demo",
+      "expected_topics": ["learning", "preference"]
+    },
+    {
+      "text": "Booked my flight to Seoul for March 15th. Excited but nervous about the language barrier.",
+      "source": "demo",
+      "expected_topics": ["travel", "korean"]
+    },
+    {
+      "text": "Started a new project at work today. Building a recommendation system for the client.",
+      "source": "demo",
+      "expected_topics": ["work", "project"]
+    },
+    {
+      "text": "Had a productive meeting about the recommendation engine. We decided on collaborative filtering.",
+      "source": "demo",
+      "expected_topics": ["work", "project"]
+    },
+    {
+      "text": "I prefer working from home on Thursdays. The office is too noisy for deep work.",
+      "source": "demo",
+      "expected_topics": ["work", "preference"]
+    },
+    {
+      "text": "Finished the initial prototype of the recommendation system. It's rough but it works!",
+      "source": "demo",
+      "expected_topics": ["work", "project", "milestone"]
+    }
+  ]
+}
+

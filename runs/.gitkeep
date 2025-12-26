@@ -1,0 +1,4 @@
+# This directory stores evaluation run outputs.
+# Individual run directories are gitignored, but this file ensures
+# the runs/ directory exists in fresh clones.
+

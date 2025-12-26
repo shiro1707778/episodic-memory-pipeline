@@ -1,0 +1,32 @@
+{
+  "version": "1.0",
+  "description": "Evaluation queries with expected results for reproducible testing.",
+  "queries": [
+    {
+      "query": "What am I learning?",
+      "expected_topics": ["learning", "korean"],
+      "description": "Should retrieve Korean learning episodes"
+    },
+    {
+      "query": "Tell me about my work project",
+      "expected_topics": ["work", "project"],
+      "description": "Should retrieve work-related episodes about the recommendation system"
+    },
+    {
+      "query": "What are my preferences?",
+      "expected_topics": ["preference"],
+      "description": "Should retrieve episodes about learning style and work preferences"
+    },
+    {
+      "query": "How is my Korean learning going?",
+      "expected_topics": ["korean", "learning"],
+      "description": "Should retrieve Korean learning progress episodes"
+    },
+    {
+      "query": "What travel plans do I have?",
+      "expected_topics": ["travel"],
+      "description": "Should retrieve Seoul trip planning episodes"
+    }
+  ]
+}
+

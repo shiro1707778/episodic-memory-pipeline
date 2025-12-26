@@ -1,11 +1,106 @@
+# Python
 __pycache__/
-*.pyc
-*.pyo
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual environments
 venv/
+.venv/
+ENV/
+env/
+
+# Environment and secrets
 .env
+.env.local
+.env.*.local
+
+# SQLite databases (generated)
 *.db
 *.db-shm
 *.db-wal
 data/*.db
 data/*.db-shm
 data/*.db-wal
+
+# Generated artifacts - FAISS indexes and ID maps
+data/*.faiss
+data/*.npy
+data/*.index
+
+# Evaluation run outputs (committed selectively via runs/.gitkeep)
+runs/eval/*/
+
+# Logs
+logs/
+*.log
+
+# Caches
+.cache/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Coverage reports
+htmlcov/
+.tox/
+.coverage
+.coverage.*
+coverage.xml
+*.cover
+.hypothesis/
+
+# Jupyter Notebooks
+.ipynb_checkpoints/
+
+# Distribution / packaging
+*.manifest
+*.spec
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Translations
+*.mo
+*.pot
+
+# Sphinx documentation
+docs/_build/
+
+# Type stubs
+.pyi
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
